@@ -7,5 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
+log = "0.4.21"
 simple-home-dir = "0.3.4"
-time = {version = "0.3.36", features =["macros", "local-offset"]}
+simple_logger = "5.0.0"
+time = {version = "0.3.36", features =["local-offset"]}

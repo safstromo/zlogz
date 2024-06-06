@@ -1,27 +1,27 @@
 use simple_home_dir::home_dir;
+use simple_logger::SimpleLogger;
 use std::{
-    fmt::format,
     fs::{self, File},
     io::Write,
 };
-use time::{macros::date, OffsetDateTime};
+use time::OffsetDateTime;
 
 fn main() -> anyhow::Result<()> {
+    SimpleLogger::new().init().unwrap();
+
     let mut home_path = home_dir().expect("No homedir found");
 
     home_path.push("zlogz");
 
-    println!("{:?}", &home_path);
-
     match fs::create_dir(&home_path) {
         Ok(_) => {
-            println!("zlogz directory created");
+            log::info!("zlogz directory created");
         }
         Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-            println!("zlogz directory already exists");
+            log::info!("zlogz directory already exists, using existing directory");
         }
         Err(e) => {
-            println!("Failed to create zlogz directory: {}", e);
+            log::error!("Failed to create zlogz directory: {}", e);
             return Err(e.into());
         }
     }
