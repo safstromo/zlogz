@@ -1,13 +1,12 @@
-use config::Config;
+mod app_config;
+
+use app_config::{read_config, AppConfig};
 use log::{error, info};
-use simple_home_dir::home_dir;
 use simple_logger::SimpleLogger;
 use std::{
-    collections::HashMap,
     env::args,
     fs::{self, File},
     io::Write,
-    path::PathBuf,
 };
 use subprocess::Exec;
 use time::OffsetDateTime;
@@ -15,7 +14,7 @@ use time::OffsetDateTime;
 fn main() -> anyhow::Result<()> {
     SimpleLogger::new().init().unwrap();
 
-    let home_path = read_config();
+    let app_config = read_config();
 
     let mut args_added = false;
 
@@ -23,7 +22,7 @@ fn main() -> anyhow::Result<()> {
         if arg.to_lowercase() == "s" {
             info!("Opening search");
             let _ = Exec::cmd("nvim")
-                .arg(&home_path)
+                .arg(&app_config.home_path)
                 .arg("+lua require('telescope.builtin').find_files()")
                 .join();
             args_added = true;
@@ -31,46 +30,21 @@ fn main() -> anyhow::Result<()> {
     });
 
     if !args_added {
-        create_log(home_path)?;
+        create_log(app_config)?;
     }
 
     Ok(())
 }
 
-fn read_config() -> PathBuf {
-    let mut config_path = home_dir().expect("No homedir found");
-    config_path.push(".config/.zlogz");
-    info!("config{:?}", config_path);
+fn create_log(mut app_config: AppConfig) -> anyhow::Result<()> {
+    app_config
+        .home_path
+        .push(OffsetDateTime::now_local()?.year().to_string());
+    app_config
+        .home_path
+        .push(OffsetDateTime::now_local()?.month().to_string());
 
-    let settings = Config::builder()
-        .add_source(config::File::with_name(config_path.to_str().unwrap()))
-        .build();
-
-    let mut home_path = PathBuf::new();
-
-    if let Ok(settings) = settings {
-        let config_map: HashMap<String, String> = settings
-            .try_deserialize()
-            .expect("Failed to deserialize settings");
-
-        home_path.push(config_map.get("path").unwrap())
-    } else if let Err(e) = settings {
-        info!("Settings don't exist, using default. Error: {}", e);
-        home_path = home_dir().expect("No homedir found");
-
-        home_path.push("zlogz");
-    }
-
-    info!("zlogz directory set {:?}", home_path);
-
-    home_path
-}
-
-fn create_log(mut home_path: std::path::PathBuf) -> anyhow::Result<()> {
-    home_path.push(OffsetDateTime::now_local()?.year().to_string());
-    home_path.push(OffsetDateTime::now_local()?.month().to_string());
-
-    match fs::create_dir_all(&home_path) {
+    match fs::create_dir_all(&app_config.home_path) {
         Ok(_) => {
             info!("zlogz directory created");
         }
@@ -87,24 +61,28 @@ fn create_log(mut home_path: std::path::PathBuf) -> anyhow::Result<()> {
 
     let file_name = format!("{}.md", &today);
 
-    home_path.push(file_name);
+    app_config.home_path.push(file_name);
 
-    let file = File::open(&home_path);
+    let file = File::open(&app_config.home_path);
 
     match file {
         Ok(_) => {
             info!("Opening todays zlogz");
-            let _ = Exec::cmd("nvim").arg(&home_path).join();
+            let _ = Exec::cmd(app_config.editor_command)
+                .arg(&app_config.home_path)
+                .join();
 
             info!("zlog opened")
         }
         Err(_) => {
             info!("A file with todays date dont exist, creating new file");
-            let mut file = File::create(&home_path)?;
+            let mut file = File::create(&app_config.home_path)?;
 
             file.write_all(format!("# {}", today).as_bytes())?;
 
-            let _ = Exec::cmd("nvim").arg(&home_path).join();
+            let _ = Exec::cmd(app_config.editor_command)
+                .arg(&app_config.home_path)
+                .join();
 
             info!("zlog opened")
         }
