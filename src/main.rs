@@ -18,9 +18,9 @@ fn main() -> anyhow::Result<()> {
 
     let mut args_added = false;
 
-    args().for_each(|arg| {
-        if arg.to_lowercase() == "s" {
-            info!("Opening search");
+    args().for_each(|arg| match arg.to_lowercase().as_str() {
+        "f" => {
+            info!("Opening search files");
 
             if app_config.editor_command == "nvim" {
                 let _ = Exec::cmd("nvim")
@@ -32,6 +32,22 @@ fn main() -> anyhow::Result<()> {
             }
             args_added = true;
         }
+
+        "s" => {
+            info!("Opening search all");
+
+            if app_config.editor_command == "nvim" {
+                let _ = Exec::cmd("nvim")
+                    .arg(&app_config.home_path)
+                    .arg("+lua require('telescope.builtin').live_grep()")
+                    .join();
+            } else {
+                info!("No search for other editors yet")
+            }
+            args_added = true;
+        }
+
+        _ => (),
     });
 
     if !args_added {
