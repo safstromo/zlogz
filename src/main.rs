@@ -13,8 +13,10 @@ fn main() -> anyhow::Result<()> {
     let mut home_path = home_dir().expect("No homedir found");
 
     home_path.push("zlogz");
+    home_path.push(OffsetDateTime::now_local()?.year().to_string());
+    home_path.push(OffsetDateTime::now_local()?.month().to_string());
 
-    match fs::create_dir(&home_path) {
+    match fs::create_dir_all(&home_path) {
         Ok(_) => {
             log::info!("zlogz directory created");
         }
@@ -47,6 +49,10 @@ fn main() -> anyhow::Result<()> {
             let mut file = File::create(&home_path)?;
 
             file.write_all(format!("# {}", today).as_bytes())?;
+
+            let _ = Exec::cmd("nvim").arg(&home_path).join();
+
+            log::info!("zlog opened")
         }
     }
 
