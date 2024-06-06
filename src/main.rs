@@ -4,6 +4,7 @@ use std::{
     fs::{self, File},
     io::Write,
 };
+use subprocess::Exec;
 use time::OffsetDateTime;
 
 fn main() -> anyhow::Result<()> {
@@ -32,9 +33,22 @@ fn main() -> anyhow::Result<()> {
 
     home_path.push(file_name);
 
-    let mut file = File::create(&home_path)?;
+    let file = File::open(&home_path);
 
-    file.write_all(format!("# {}", today).as_bytes())?;
+    match file {
+        Ok(_) => {
+            log::info!("Opening todays zlogz");
+            let _ = Exec::cmd("nvim").arg(&home_path).join();
+
+            log::info!("zlog opened")
+        }
+        Err(_) => {
+            log::info!("A file with todays date dont exist, creating new file");
+            let mut file = File::create(&home_path)?;
+
+            file.write_all(format!("# {}", today).as_bytes())?;
+        }
+    }
 
     Ok(())
 }
