@@ -11,7 +11,6 @@ Move to repo:
 `cd zlogz`
 
 Install:
-
 `cargo install --path .`
 
 ## Usage
@@ -37,5 +36,7 @@ Create a .zlogz.toml in your ~/config
 
 ### Default
 
-`path = "/home/username/zlogz"
-editor = "nvim"`
+```
+path = "/home/username/zlogz"
+editor = "nvim"
+```
