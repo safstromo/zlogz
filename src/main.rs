@@ -21,10 +21,15 @@ fn main() -> anyhow::Result<()> {
     args().for_each(|arg| {
         if arg.to_lowercase() == "s" {
             info!("Opening search");
-            let _ = Exec::cmd("nvim")
-                .arg(&app_config.home_path)
-                .arg("+lua require('telescope.builtin').find_files()")
-                .join();
+
+            if app_config.editor_command == "nvim" {
+                let _ = Exec::cmd("nvim")
+                    .arg(&app_config.home_path)
+                    .arg("+lua require('telescope.builtin').find_files()")
+                    .join();
+            } else {
+                info!("No search for other editors yet")
+            }
             args_added = true;
         }
     });
