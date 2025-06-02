@@ -4,6 +4,7 @@ use config::Config;
 use log::info;
 use simple_home_dir::home_dir;
 
+#[derive(Clone)]
 pub struct AppConfig {
     pub home_path: PathBuf,
     pub editor_command: String,
